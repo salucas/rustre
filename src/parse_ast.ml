@@ -37,8 +37,8 @@ and expr_desc =
   | EFby   of const * expr
   | EOp    of op * expr list
   | EApp   of ident * expr list * expr
-  | EWhen  of expr * ident * ident
-  | EMerge of ident * (ident * expr) list
+  | EWhen  of expr * ident * expr
+  | EMerge of expr * (ident * expr) list
 
 and const =
   | CNil
@@ -120,8 +120,8 @@ let pp_expr =
     | EOp (OpNot, [e]) -> fprintf ppf "(%a %a)" pp_op OpNot pp e
     | EOp _ -> assert false
     | EApp (f, args, ev) -> fprintf ppf "(%s(%a) every %a)" f (pp_list ", " pp) args pp ev
-    | EWhen (e, c, x) -> fprintf ppf "(%a when %s(%s))" pp e c x
-    | EMerge (x, clauses) -> fprintf ppf "(merge %s %a)" x (pp_list " " pp_clause) clauses
+    | EWhen (e, c, x) -> fprintf ppf "(%a when %s(%a))" pp e c pp x
+    | EMerge (x, clauses) -> fprintf ppf "(merge %a %a)" pp x (pp_list " " pp_clause) clauses
   and pp_clause ppf (c, e) = fprintf ppf "(%s -> %a)" c pp e
   in pp
 

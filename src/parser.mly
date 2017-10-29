@@ -4,6 +4,7 @@
 
   let dummy_loc e pos = { expr_desc = e ; expr_loc = (pos, pos) }
   let pat_descs patterns = List.map (fun p -> p.pat_desc) patterns
+  let expr_of_ident x = dummy_loc (EIdent x) Lexing.dummy_pos
 
   (** Syntactic sugar *)
 
@@ -23,7 +24,12 @@
     ])
 
   (* e1 -> e2  ~>  if (True fby False) then e1 else e2 *)
-  let arrow _ _ = failwith "Not implemented"
+  let arrow e1 e2 =
+    let pos = Lexing.dummy_pos in
+    let tfbyf =
+      let e = EFby (CBool true, dummy_loc (EConst (CBool true)) pos) in
+      dummy_loc e pos
+    in if_then_else tfbyf e1 e2 pos
 
   (* pre e  ~>  nil fby e *)
   let pre e = EFby (CNil, e)
@@ -142,7 +148,7 @@ expr:
 | LPAR es = nclist2(located(expr)) RPAR        { ETuple es }
 | v = const FBY e = located(expr)              { EFby (v, e) }
 
-| IF x = ident
+| IF x = located(expr)
   THEN ethen = located(expr)
   ELSE eelse = located(expr)                   { if_then_else x ethen eelse $endpos }
 
@@ -170,9 +176,9 @@ expr:
   ev = option(preceded(EVERY, located(expr)))  { application f args ev $endpos }
 
 | e = located(expr)
-  WHEN c = ident LPAR x = ident RPAR           { EWhen (e, c, x) }
+  WHEN c = ident LPAR x = located(expr) RPAR   { EWhen (e, c, x) }
 | MERGE x = ident
-  clauses = nonempty_list(merge_clause)        { EMerge (x, clauses) }
+  clauses = nonempty_list(merge_clause)        { EMerge (expr_of_ident x, clauses) }
 
 
 merge_clause:
